@@ -1,0 +1,226 @@
+name: Generate PNGs for cooking QTE UI (self-deleting)
+
+on:
+  push:
+    branches:
+      - add-cooking-qte-ui-pngs
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y inkscape imagemagick
+
+      - name: Generate PNGs from embedded SVGs
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP=SVG_tmp
+          OUT1=Export/PNG/@1x
+          OUT2=Export/PNG/@2x
+          mkdir -p "$TMP" "$OUT1/ui" "$OUT1/fx" "$OUT1/prompts" "$OUT1/props" "$OUT2"
+
+          ink() { inkscape "$1" --export-type=png --export-filename="$2" --export-width="$3" --export-height="$4"; }
+
+          # --- Write SVG sources to temp (not committed) ---
+          cat > "$TMP/ui_bar-bg.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="512" height="144" viewBox="0 0 512 144">
+            <defs>
+              <style>
+                .s{fill:#3B3B3B;stroke:#2A2A2A;stroke-width:6;stroke-linejoin:round}
+                .t{fill:#565656;stroke:#2A2A2A;stroke-width:4}
+                .label{fill:#F2E9D8;font-size:40px;font-family:Verdana,DejaVu Sans,sans-serif;font-weight:700}
+              </style>
+            </defs>
+            <rect x="6" y="6" width="500" height="132" rx="24" class="s"/>
+            <rect x="32" y="32" width="448" height="40" rx="20" class="t"/>
+            <g transform="translate(0,78)">
+              <text x="256" y="36" text-anchor="middle" class="label">PRESS</text>
+            </g>
+          </svg>
+          EOF
+
+          cat > "$TMP/ui_bar-fill.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="448" height="40" viewBox="0 0 448 40">
+            <defs>
+              <style>.f{fill:#F4A41D;stroke:#2A2A2A;stroke-width:4}</style>
+            </defs>
+            <rect x="2" y="2" width="444" height="36" rx="18" class="f"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/ui_pointer.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="56" viewBox="0 0 24 56">
+            <defs><style>.p{fill:#FFC23C;stroke:#2A2A2A;stroke-width:4;stroke-linejoin:round}</style></defs>
+            <path class="p" d="M12 4 L20 28 L4 28 Z M12 28 L12 52"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/ui_badge-success.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+            <defs><style>.c{fill:#3ECF8E;stroke:#2A2A2A;stroke-width:8;stroke-linejoin:round;stroke-linecap:round}</style></defs>
+            <circle cx="128" cy="128" r="112" class="c"/>
+            <path class="c" d="M78 132 l32 32 68-76" fill="none"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/ui_badge-fail.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+            <defs><style>.c{fill:#F05252;stroke:#2A2A2A;stroke-width:8;stroke-linejoin:round;stroke-linecap:round}</style></defs>
+            <circle cx="128" cy="128" r="112" class="c"/>
+            <path d="M86 86 L170 170 M170 86 L86 170" stroke="#2A2A2A" stroke-width="16" stroke-linecap="round"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/ui_timer-ring-bg.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+            <defs><style>.b{fill:none;stroke:#6B6B6B;stroke-width:28;stroke-linecap:round}.o{stroke:#2A2A2A;stroke-width:6;fill:none}</style></defs>
+            <circle cx="128" cy="128" r="92" class="b"/>
+            <circle cx="128" cy="128" r="92" class="o"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/ui_timer-ring-fg.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+            <defs><style>.f{fill:none;stroke:#F4A41D;stroke-width:28;stroke-linecap:round}.o{stroke:#2A2A2A;stroke-width:6;fill:none}</style></defs>
+            <circle cx="128" cy="128" r="92" class="f"/>
+            <circle cx="128" cy="128" r="92" class="o"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/fx_spark.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+            <defs><style>.s{fill:#FFC23C;stroke:#2A2A2A;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}</style></defs>
+            <path class="s" d="M48 8 L56 40 L88 48 L56 56 L48 88 L40 56 L8 48 L40 40 Z"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/fx_smoke.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120">
+            <defs><style>.a{fill:#B9C0C6;opacity:0.7;stroke:#2A2A2A;stroke-width:3}</style></defs>
+            <circle cx="60" cy="70" r="32" class="a"/>
+            <circle cx="90" cy="64" r="28" class="a"/>
+            <circle cx="110" cy="78" r="24" class="a"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/prompts_keycap-space.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120">
+            <defs>
+              <style>
+                .k{fill:#3B3B3B;stroke:#2A2A2A;stroke-width:6}
+                .t{fill:#F2E9D8;font-size:36px;font-family:Verdana,DejaVu Sans,sans-serif;font-weight:700}
+                .shine{fill:#565656}
+              </style>
+            </defs>
+            <rect x="6" y="6" width="348" height="108" rx="18" class="k"/>
+            <rect x="14" y="14" width="332" height="30" rx="12" class="shine" opacity="0.35"/>
+            <text x="180" y="78" text-anchor="middle" class="t">SPACE</text>
+          </svg>
+          EOF
+
+          cat > "$TMP/prompts_gamepad-a.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+            <defs><style>.b{fill:#3ECF8E;stroke:#2A2A2A;stroke-width:6}.t{fill:#F2E9D8;font-size:48px;font-family:Verdana,DejaVu Sans,sans-serif;font-weight:700}</style></defs>
+            <circle cx="60" cy="60" r="54" class="b"/>
+            <text x="60" y="78" text-anchor="middle" class="t">A</text>
+          </svg>
+          EOF
+
+          cat > "$TMP/props_pan-top.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="540" height="360" viewBox="0 0 540 360">
+            <defs>
+              <style>
+                .h{fill:#2F2F2F;stroke:#2A2A2A;stroke-width:8}
+                .i{fill:#1E1E1E}
+                .g{fill:#3B3B3B;stroke:#2A2A2A;stroke-width:8}
+              </style>
+            </defs>
+            <circle cx="220" cy="180" r="130" class="h"/>
+            <circle cx="220" cy="180" r="108" class="i"/>
+            <rect x="312" y="158" width="200" height="44" rx="20" class="g"/>
+            <circle cx="502" cy="180" r="8" fill="#1E1E1E" stroke="#2A2A2A" stroke-width="4"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/props_egg-cooked.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="260" height="200" viewBox="0 0 260 200">
+            <defs>
+              <style>
+                .w{fill:#F2E9D8;stroke:#2A2A2A;stroke-width:6}
+                .y{fill:#F4A41D;stroke:#2A2A2A;stroke-width:6}
+                .b{fill:none;stroke:#2A2A2A;stroke-width:4;opacity:0.25}
+              </style>
+            </defs>
+            <path class="w" d="M130 36c36 0 68 20 68 44s-28 48-68 60-92-8-92-40 56-64 92-64z"/>
+            <circle cx="138" cy="92" r="30" class="y"/>
+            <circle cx="100" cy="70" r="4" class="b"/>
+            <circle cx="170" cy="130" r="3" class="b"/>
+          </svg>
+          EOF
+
+          cat > "$TMP/props_egg-burnt.svg" <<'EOF'
+          <svg xmlns="http://www.w3.org/2000/svg" width="260" height="200" viewBox="0 0 260 200">
+            <defs>
+              <style>
+                .w{fill:#D8D0C6;stroke:#2A2A2A;stroke-width:6}
+                .y{fill:#C67B1A;stroke:#2A2A2A;stroke-width:6}
+                .char{fill:none;stroke:#2A2A2A;stroke-width:6;stroke-linecap:round}
+              </style>
+            </defs>
+            <path class="w" d="M130 36c36 0 68 20 68 44s-28 48-68 60-92-8-92-40 56-64 92-64z"/>
+            <circle cx="138" cy="92" r="30" class="y"/>
+            <path class="char" d="M70 120c20-8 34-2 52-8M168 68c10 6 20 0 28-4"/>
+          </svg>
+          EOF
+
+          # --- Export PNGs (@1x) ---
+          ink "$TMP/ui_bar-bg.svg"         "$OUT1/ui/bar-bg.png"         1024 288
+          ink "$TMP/ui_bar-fill.svg"       "$OUT1/ui/bar-fill.png"        896  80
+          ink "$TMP/ui_pointer.svg"        "$OUT1/ui/pointer.png"          48 112
+          ink "$TMP/ui_badge-success.svg"  "$OUT1/ui/badge-success.png"   512 512
+          ink "$TMP/ui_badge-fail.svg"     "$OUT1/ui/badge-fail.png"      512 512
+          ink "$TMP/ui_timer-ring-bg.svg"  "$OUT1/ui/timer-ring-bg.png"   512 512
+          ink "$TMP/ui_timer-ring-fg.svg"  "$OUT1/ui/timer-ring-fg.png"   512 512
+
+          ink "$TMP/fx_spark.svg"          "$OUT1/fx/spark.png"           192 192
+          ink "$TMP/fx_smoke.svg"          "$OUT1/fx/smoke.png"           320 240
+
+          ink "$TMP/prompts_keycap-space.svg" "$OUT1/prompts/keycap-space.png" 720 240
+          ink "$TMP/prompts_gamepad-a.svg"    "$OUT1/prompts/gamepad-a.png"    256 256
+
+          ink "$TMP/props_pan-top.svg"     "$OUT1/props/pan-top.png"      1080 720
+          ink "$TMP/props_egg-cooked.svg"  "$OUT1/props/egg-cooked.png"    520 400
+          ink "$TMP/props_egg-burnt.svg"   "$OUT1/props/egg-burnt.png"     520 400
+
+          # --- Create @2x keeping folder structure ---
+          while IFS= read -r -d '' f; do
+            rel="${f#$OUT1/}"
+            out="$OUT2/$rel"
+            mkdir -p "$(dirname "$out")"
+            magick "$f" -filter Lanczos -resize 200% "$out"
+          done < <(find "$OUT1" -type f -name "*.png" -print0)
+
+          rm -rf "$TMP"
+
+      - name: Commit PNGs and remove workflow
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add Export/PNG
+          git rm -f .github/workflows/generate-pngs.yml || true
+          git commit -m "Add PNG exports for cooking QTE UI [skip ci]" || echo "Nothing to commit"
+          git push
